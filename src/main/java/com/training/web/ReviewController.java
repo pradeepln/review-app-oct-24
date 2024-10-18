@@ -4,9 +4,6 @@ import java.net.URI;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.client.ServiceInstance;
-import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,11 +12,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import com.training.dal.ReviewRepository;
 import com.training.domain.Review;
+import com.training.web.client.Product;
+import com.training.web.client.RemoteProductService;
 
 @RestController
 public class ReviewController {
@@ -28,7 +25,7 @@ public class ReviewController {
 	ReviewRepository repo;
 	
 	@Autowired
-	DiscoveryClient dc;
+	RemoteProductService productService;
 
 //	@Value("${product.base.url}")
 	
@@ -36,13 +33,10 @@ public class ReviewController {
 	@PostMapping("/reviews")
 	public ResponseEntity addReview(@RequestBody Review toBeAdded) {
 		int pid = toBeAdded.getPid();
-		List<ServiceInstance> allRunningInstances = dc.getInstances("product-app");
-		String productBaseUrl = allRunningInstances.get(0).getUri().toString();
-		System.out.println("Got From Eureka --> "+productBaseUrl);
 		
 		try {
-			RestTemplate rt = new RestTemplate();
-			String json = rt.getForObject(productBaseUrl+"/products/{id}", String.class, pid);
+			Product found = productService.getProductById(pid);
+			
 			Review added = repo.save(toBeAdded);
 			HttpHeaders headers = new HttpHeaders();
 			headers.setLocation(URI.create("/reviews/"+added.getId()));
