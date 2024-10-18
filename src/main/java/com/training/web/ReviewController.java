@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,13 +25,16 @@ public class ReviewController {
 	@Autowired
 	ReviewRepository repo;
 
+	@Value("${product.base.url}")
+	String productBaseUrl;
+	
 	@PostMapping("/reviews")
 	public ResponseEntity addReview(@RequestBody Review toBeAdded) {
 		int pid = toBeAdded.getPid();
 		
 		try {
 			RestTemplate rt = new RestTemplate();
-			String json = rt.getForObject("http://localhost:8081/products/{id}", String.class, pid);
+			String json = rt.getForObject(productBaseUrl+"/products/{id}", String.class, pid);
 			Review added = repo.save(toBeAdded);
 			HttpHeaders headers = new HttpHeaders();
 			headers.setLocation(URI.create("/reviews/"+added.getId()));
