@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,13 +26,19 @@ public class ReviewController {
 	
 	@Autowired
 	ReviewRepository repo;
+	
+	@Autowired
+	DiscoveryClient dc;
 
-	@Value("${product.base.url}")
-	String productBaseUrl;
+//	@Value("${product.base.url}")
+	
 	
 	@PostMapping("/reviews")
 	public ResponseEntity addReview(@RequestBody Review toBeAdded) {
 		int pid = toBeAdded.getPid();
+		List<ServiceInstance> allRunningInstances = dc.getInstances("product-app");
+		String productBaseUrl = allRunningInstances.get(0).getUri().toString();
+		System.out.println("Got From Eureka --> "+productBaseUrl);
 		
 		try {
 			RestTemplate rt = new RestTemplate();
